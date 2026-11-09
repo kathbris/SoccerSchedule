@@ -1,0 +1,27 @@
+{
+  "app": "SoccerPracticeScheduler",
+  "version": 2,
+  "settings": { "youthStart": "17:00", "maxDaily": 1 },
+  "teams": [
+    { "name": "U10 Rockets", "year": 2016, "count": 2, "duration": 60,
+      "restrictions": [ { "day": "Friday", "allDay": true, "from": "00:00", "to": "23:59" } ] },
+    { "name": "U12 Thunder", "year": 2014, "count": 2, "duration": 75,
+      "restrictions": [ { "day": "Wednesday", "allDay": false, "from": "18:00", "to": "19:30" } ] },
+    { "name": "U14 Strikers", "year": 2012, "count": 3, "duration": 90,
+      "restrictions": [ { "day": "Monday", "allDay": true, "from": "00:00", "to": "23:59" },
+                        { "day": "Thursday", "allDay": false, "from": "20:00", "to": "23:00" } ] },
+    { "name": "U16 United", "year": 2010, "count": 2, "duration": 90, "restrictions": [] }
+  ],
+  "fields": [
+    { "name": "Riverside Field 1", "step": 30,
+      "windows": [ { "day": "Monday", "start": "17:00", "end": "21:00" },
+                   { "day": "Tuesday", "start": "17:00", "end": "21:00" },
+                   { "day": "Wednesday", "start": "17:00", "end": "21:00" },
+                   { "day": "Thursday", "start": "17:00", "end": "21:00" } ] },
+    { "name": "Westview Park", "step": 60,
+      "windows": [ { "day": "Tuesday", "start": "18:00", "end": "21:00" },
+                   { "day": "Thursday", "start": "18:00", "end": "21:00" },
+                   { "day": "Saturday", "start": "09:00", "end": "13:00" } ] }
+  ],
+  "schedule": []
+}
