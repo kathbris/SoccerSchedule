@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Soccer Practice Scheduler</title>
 <style>
-/* Base + utility classes (self-contained, no external CSS needed) */
 html,body{margin:0;padding:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.4}
 h1,h2,p{margin:0}
 button,input,select,textarea{font:inherit;border:0}
@@ -17,7 +16,7 @@ button,input,select,textarea{font:inherit;border:0}
 .mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-3{margin-top:.75rem}.mt-4{margin-top:1rem}
 .text-xs{font-size:.75rem}.text-sm{font-size:.875rem}.text-base{font-size:1rem}.text-lg{font-size:1.125rem}.text-2xl{font-size:1.5rem}
 .font-bold{font-weight:700}.font-semibold{font-weight:600}
-.grid{display:grid}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid{display:grid}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.col-span-2{grid-column:span 2/span 2}
 .flex{display:flex}.flex-wrap{flex-wrap:wrap}.justify-between{justify-content:space-between}.justify-end{justify-content:flex-end}
 .items-center{align-items:center}.items-end{align-items:flex-end}.items-start{align-items:flex-start}
 .grow{flex-grow:1}.shrink-0{flex-shrink:0}.min-w-0{min-width:0}
@@ -57,6 +56,12 @@ body{background:#f8fafc}
 #socSched3 .bad{color:#b91c1c}
 #socSched3 .editing{outline:2px solid #2563eb;outline-offset:1px}
 #socSched3 .hidden{display:none}
+#socSched3 .tag{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;margin-right:4px}
+#socSched3 .k-practice{background:#dcfce7;color:#166534}
+#socSched3 .k-blueplus{background:#dbeafe;color:#1e40af}
+#socSched3 .k-fitness{background:#ffedd5;color:#9a3412}
+#socSched3 .k-classroom{background:#ede9fe;color:#5b21b6}
+#socSched3 .scroll{max-height:520px;overflow-y:auto;padding-right:4px}
 @media(prefers-color-scheme:dark){
 #socSched3{background:#0f172a;color:#e2e8f0}
 #socSched3 .card{background:#1e293b;border-color:#334155}
@@ -71,12 +76,16 @@ body{background:#f8fafc}
 #socSched3 .danger{background:#450a0a;color:#fca5a5}
 #socSched3 .edit{background:#1e3a8a;color:#bfdbfe}
 #socSched3 .pdfb{background:#14532d;color:#bbf7d0}
+#socSched3 .k-practice{background:#14532d;color:#bbf7d0}
+#socSched3 .k-blueplus{background:#1e3a8a;color:#bfdbfe}
+#socSched3 .k-fitness{background:#7c2d12;color:#fed7aa}
+#socSched3 .k-classroom{background:#4c1d95;color:#ddd6fe}
 }
 </style>
 <div class="max-w-6xl mx-auto">
   <div class="mb-5">
     <h1 class="text-2xl font-bold">⚽ Soccer Practice Scheduler</h1>
-    <p class="text-sm muted mt-1">Multiple restrictions and time windows, editable records, database export/import, and PDF calendars per team or field.</p>
+    <p class="text-sm muted mt-1">Schedule practices, Blue+, fitness and classroom sessions across fields, fitness rooms and classrooms. Export/import the database and print PDF calendars per team or venue.</p>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -87,10 +96,24 @@ body{background:#f8fafc}
         <div class="grid grid-cols-2 gap-3">
           <div><label for="teamName">Team name</label><input id="teamName" maxlength="60" placeholder="U14 Strikers"></div>
           <div><label for="birthYear">Birth year</label><input id="birthYear" type="number" min="1990" max="2035" placeholder="2012"></div>
-          <div><label for="practiceCount">Practices / week</label>
-            <select id="practiceCount"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
-          <div><label for="duration">Practice length</label>
-            <select id="duration"><option value="60">60 min</option><option value="75">75 min</option><option value="90" selected>90 min</option><option value="120">120 min</option></select></div>
+        </div>
+        <div class="sub mt-3">
+          <b class="text-sm">Weekly sessions</b>
+          <p class="text-xs muted mb-2">Practice and Blue+ use Field venues, Fitness uses Fitness venues, Classroom uses Classroom venues. Set a count to 0 if the team doesn't need it.</p>
+          <div class="space-y-2">
+            <div class="item flex flex-wrap gap-2 items-end"><div class="grow" style="min-width:100px"><span class="tag k-practice">Practice</span></div>
+              <div style="min-width:90px"><label for="practiceCount">Per week</label><select id="practiceCount" class="cntSel" data-min="1"></select></div>
+              <div style="min-width:100px"><label for="duration">Length</label><select id="duration" class="durSel"></select></div></div>
+            <div class="item flex flex-wrap gap-2 items-end"><div class="grow" style="min-width:100px"><span class="tag k-blueplus">Blue+</span></div>
+              <div style="min-width:90px"><label for="bpCount">Per week</label><select id="bpCount" class="cntSel" data-min="0"></select></div>
+              <div style="min-width:100px"><label for="bpDur">Length</label><select id="bpDur" class="durSel"></select></div></div>
+            <div class="item flex flex-wrap gap-2 items-end"><div class="grow" style="min-width:100px"><span class="tag k-fitness">Fitness</span></div>
+              <div style="min-width:90px"><label for="fitCount">Per week</label><select id="fitCount" class="cntSel" data-min="0"></select></div>
+              <div style="min-width:100px"><label for="fitDur">Length</label><select id="fitDur" class="durSel"></select></div></div>
+            <div class="item flex flex-wrap gap-2 items-end"><div class="grow" style="min-width:100px"><span class="tag k-classroom">Classroom</span></div>
+              <div style="min-width:90px"><label for="clsCount">Per week</label><select id="clsCount" class="cntSel" data-min="0"></select></div>
+              <div style="min-width:100px"><label for="clsDur">Length</label><select id="clsDur" class="durSel"></select></div></div>
+          </div>
         </div>
         <div class="sub mt-3">
           <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
@@ -107,17 +130,21 @@ body{background:#f8fafc}
         </div>
         <div id="teamMsg" aria-live="polite" class="text-sm font-semibold mt-3"></div>
       </form>
-      <div id="teamList" class="mt-4 space-y-2"></div>
+      <div id="teamList" class="mt-4 space-y-2 scroll"></div>
     </section>
 
-    <!-- FIELDS -->
+    <!-- VENUES -->
     <section class="card" id="fieldCard">
-      <h2 class="font-bold text-lg mb-3" id="fieldTitle">Add Field</h2>
+      <h2 class="font-bold text-lg mb-3" id="fieldTitle">Add Venue</h2>
       <form id="fieldForm" novalidate>
         <div class="grid grid-cols-2 gap-3">
-          <div><label for="fieldName">Field name</label><input id="fieldName" maxlength="60" placeholder="Riverside Field 1"></div>
-          <div><label for="slotLength">Start-time increment</label>
-            <select id="slotLength"><option value="30">30 min</option><option value="60" selected>60 min</option></select></div>
+          <div class="col-span-2"><label for="fieldName">Venue name</label><input id="fieldName" maxlength="60" placeholder="Riverside Field 1"></div>
+          <div><label for="fieldType">Venue type</label>
+            <select id="fieldType"><option value="field">Field (Practice / Blue+)</option><option value="fitness">Fitness room</option><option value="classroom">Classroom</option></select></div>
+          <div><label for="capacity">Teams at once</label>
+            <select id="capacity"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
+          <div class="col-span-2"><label for="slotLength">Start-time increment</label>
+            <select id="slotLength"><option value="15">15 min</option><option value="30">30 min</option><option value="60" selected>60 min</option></select></div>
         </div>
         <div class="sub mt-3">
           <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
@@ -128,20 +155,20 @@ body{background:#f8fafc}
           <p id="fWinsEmpty" class="text-xs muted">Add at least one time window.</p>
         </div>
         <div class="flex flex-wrap gap-2 mt-3">
-          <button class="primary" type="submit" id="fieldSubmit">Add Field</button>
+          <button class="primary" type="submit" id="fieldSubmit">Add Venue</button>
           <button class="secondary hidden" type="button" id="fieldCancel">Cancel Edit</button>
-          <button class="secondary" id="clearFields" type="button">Clear All Fields</button>
+          <button class="secondary" id="clearFields" type="button">Clear All Venues</button>
         </div>
         <div id="fieldMsg" aria-live="polite" class="text-sm font-semibold mt-3"></div>
       </form>
-      <div id="fieldList" class="mt-4 space-y-2"></div>
+      <div id="fieldList" class="mt-4 space-y-2 scroll"></div>
     </section>
   </div>
 
   <!-- DATABASE -->
   <section class="card mt-4">
     <h2 class="font-bold text-lg">Database: Export &amp; Import</h2>
-    <p class="text-sm muted mb-3">Export saves teams, fields, rules and the current schedule to a .json file. Files from earlier versions can also be imported.</p>
+    <p class="text-sm muted mb-3">Export saves teams, venues, rules and the current schedule to a .json file. Files from earlier versions can also be imported.</p>
     <div class="flex flex-wrap gap-2">
       <button id="exportBtn" type="button" class="primary">⬇ Export Database (.json)</button>
       <button id="showJson" type="button" class="secondary">Show JSON</button>
@@ -161,10 +188,10 @@ body{background:#f8fafc}
   <section class="card mt-4">
     <div class="flex flex-wrap gap-3 justify-between items-end">
       <div><h2 class="font-bold text-lg">Scheduling Rules</h2>
-        <p class="text-sm muted">Team restrictions, field windows and field overlaps are never violated.</p></div>
+        <p class="text-sm muted">Team restrictions, venue windows, venue capacity and team double-booking are never violated. Fitness and classroom sessions are placed next to the team's field session when possible.</p></div>
       <div class="flex flex-wrap gap-3">
         <div><label for="youthStart">Earliest start</label><input id="youthStart" type="time" value="17:00"></div>
-        <div><label for="maxDaily">Max practices/team/day</label>
+        <div><label for="maxDaily">Max field sessions/team/day</label>
           <select id="maxDaily"><option selected>1</option><option>2</option></select></div>
       </div>
       <button id="generate" type="button" class="primary text-base px-5 py-3">Generate Best Schedule</button>
@@ -176,7 +203,7 @@ body{background:#f8fafc}
   <section class="card mt-4">
     <div class="flex flex-wrap justify-between items-center gap-3 mb-3">
       <div><h2 class="font-bold text-lg">Recommended Weekly Schedule</h2>
-        <p id="summary" class="text-sm muted">Add teams and fields, then generate a schedule.</p></div>
+        <p id="summary" class="text-sm muted">Add teams and venues, then generate a schedule.</p></div>
       <button id="clearSchedule" type="button" class="secondary">Clear Schedule</button>
     </div>
     <div id="schedule" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
@@ -190,6 +217,17 @@ const $ = id => root.querySelector('#' + id);
 const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const HH = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 const NL = '\n', BS = '\\';
+const DURS = []; for (let m = 30; m <= 180; m += 15) DURS.push(m);
+// Session kinds and the venue type each one needs
+const KINDS = {
+  practice:  { label: 'Practice',  venue: 'field',     pdf: [0.09, 0.47, 0.23] },
+  blueplus:  { label: 'Blue+',     venue: 'field',     pdf: [0.12, 0.31, 0.69] },
+  fitness:   { label: 'Fitness',   venue: 'fitness',   pdf: [0.76, 0.33, 0.05] },
+  classroom: { label: 'Classroom', venue: 'classroom', pdf: [0.42, 0.20, 0.66] }
+};
+const EXTRA = ['blueplus', 'fitness', 'classroom'];
+const EXTRA_IDS = { blueplus: ['bpCount', 'bpDur'], fitness: ['fitCount', 'fitDur'], classroom: ['clsCount', 'clsDur'] };
+const VTYPE = { field: 'Field', fitness: 'Fitness room', classroom: 'Classroom' };
 let teams = [], fields = [], schedule = [], editT = -1, editF = -1, seq = 0;
 
 const nid = () => 'id' + Date.now().toString(36) + (seq++);
@@ -199,6 +237,12 @@ const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 const dOpts = sel => days.map(d => `<option${d === sel ? ' selected' : ''}>${d}</option>`).join('');
 const tKey = t => t.name.toLowerCase() + '|' + t.year;
 const dsort = (a, b) => days.indexOf(a.day) - days.indexOf(b.day) || mins(a.from || a.start) - mins(b.from || b.start);
+const kLabel = k => (KINDS[k] || KINDS.practice).label;
+const durTxt = m => m % 60 === 0 ? (m / 60) + ' hr' : (m > 60 ? Math.floor(m / 60) + ' hr ' + (m % 60) + ' min' : m + ' min');
+
+// Populate count / duration selects
+root.querySelectorAll('.durSel').forEach(s => { s.innerHTML = DURS.map(m => `<option value="${m}">${durTxt(m)}</option>`).join(''); });
+root.querySelectorAll('.cntSel').forEach(s => { const mn = +s.dataset.min; let h = ''; for (let i = mn; i <= 4; i++) h += `<option>${i}</option>`; s.innerHTML = h; });
 
 function say(el, s, bad) { const e = $(el); e.textContent = s; e.className = 'text-sm font-semibold mt-3 ' + (bad ? 'bad' : 'ok'); }
 function empt() {
@@ -256,19 +300,23 @@ function readWins() {
 
 /* ---------- Form state ---------- */
 function resetTeam() {
-  $('teamForm').reset(); $('practiceCount').value = '2'; $('duration').value = '90'; $('tRestr').innerHTML = '';
+  $('teamForm').reset(); $('practiceCount').value = '2'; $('duration').value = '90';
+  EXTRA.forEach(k => { $(EXTRA_IDS[k][0]).value = '0'; $(EXTRA_IDS[k][1]).value = '60'; });
+  $('tRestr').innerHTML = '';
   editT = -1; $('teamSubmit').textContent = 'Add Team'; $('teamTitle').textContent = 'Add Team';
   $('teamCancel').classList.add('hidden'); $('teamCard').classList.remove('editing'); empt(); render();
 }
 function resetField() {
-  $('fieldForm').reset(); $('slotLength').value = '60'; $('fWins').innerHTML = ''; winRow();
-  editF = -1; $('fieldSubmit').textContent = 'Add Field'; $('fieldTitle').textContent = 'Add Field';
+  $('fieldForm').reset(); $('slotLength').value = '60'; $('fieldType').value = 'field'; $('capacity').value = '1';
+  $('fWins').innerHTML = ''; winRow();
+  editF = -1; $('fieldSubmit').textContent = 'Add Venue'; $('fieldTitle').textContent = 'Add Venue';
   $('fieldCancel').classList.add('hidden'); $('fieldCard').classList.remove('editing'); empt(); render();
 }
 function editTeam(i) {
   const t = teams[i]; if (!t) return;
   resetTeam(); editT = i;
   $('teamName').value = t.name; $('birthYear').value = t.year; $('practiceCount').value = String(t.count); $('duration').value = String(t.duration);
+  EXTRA.forEach(k => { $(EXTRA_IDS[k][0]).value = String(t[k].count); $(EXTRA_IDS[k][1]).value = String(t[k].duration); });
   t.restrictions.forEach(r => restrRow(r));
   $('teamSubmit').textContent = 'Save Changes'; $('teamTitle').textContent = 'Edit Team: ' + t.name;
   $('teamCancel').classList.remove('hidden'); $('teamCard').classList.add('editing');
@@ -278,44 +326,52 @@ function editTeam(i) {
 function editField(i) {
   const f = fields[i]; if (!f) return;
   resetField(); editF = i;
-  $('fieldName').value = f.name; $('slotLength').value = String(f.step); $('fWins').innerHTML = '';
-  f.windows.forEach(w => winRow(w));
-  $('fieldSubmit').textContent = 'Save Changes'; $('fieldTitle').textContent = 'Edit Field: ' + f.name;
+  $('fieldName').value = f.name; $('slotLength').value = String(f.step); $('fieldType').value = f.type; $('capacity').value = String(f.capacity);
+  $('fWins').innerHTML = ''; f.windows.forEach(w => winRow(w));
+  $('fieldSubmit').textContent = 'Save Changes'; $('fieldTitle').textContent = 'Edit Venue: ' + f.name;
   $('fieldCancel').classList.remove('hidden'); $('fieldCard').classList.add('editing');
   say('fieldMsg', 'Editing ' + f.name + '. Save or cancel when done.'); render();
   $('fieldCard').scrollIntoView({ behavior: 'smooth', block: 'start' }); $('fieldName').focus({ preventScroll: true });
 }
 
 /* ---------- Rendering ---------- */
+function teamTags(t) {
+  let h = `<span class='tag k-practice'>Practice ${t.count}× ${t.duration}m</span>`;
+  EXTRA.forEach(k => { if (t[k].count) h += `<span class='tag k-${k}'>${kLabel(k)} ${t[k].count}× ${t[k].duration}m</span>`; });
+  return h;
+}
 function render() {
   $('teamList').innerHTML = teams.length ? teams.map((t, i) => `<div class='item flex justify-between items-start gap-2${i === editT ? ' editing' : ''}'>
 <div class='min-w-0'><b>${esc(t.name)}</b> <span class='text-xs'>(${t.year})</span>
-<div class='text-xs muted'>${t.count}×/week · ${t.duration} min</div>
-<div class='text-xs muted'>${t.restrictions.length ? 'Unavailable: ' + t.restrictions.map(r => r.day.slice(0, 3) + (r.allDay ? ' all day' : ' ' + r.from + '–' + r.to)).join(', ') : 'No restrictions'}</div></div>
+<div class='mt-1'>${teamTags(t)}</div>
+<div class='text-xs muted mt-1'>${t.restrictions.length ? 'Unavailable: ' + t.restrictions.map(r => r.day.slice(0, 3) + (r.allDay ? ' all day' : ' ' + r.from + '–' + r.to)).join(', ') : 'No restrictions'}</div></div>
 <div class='flex flex-wrap gap-1 shrink-0 justify-end'>
 <button type='button' class='pdfb' data-pt='${i}' aria-label='Export PDF calendar for ${esc(t.name)}'>PDF</button>
 <button type='button' class='edit' data-et='${i}' aria-label='Edit ${esc(t.name)}'>Edit</button>
 <button type='button' class='danger' data-rt='${i}' aria-label='Remove ${esc(t.name)}'>×</button></div></div>`).join('')
     : `<p class='text-sm muted'>No teams entered.</p>`;
   $('fieldList').innerHTML = fields.length ? fields.map((f, i) => `<div class='item flex justify-between items-start gap-2${i === editF ? ' editing' : ''}'>
-<div class='min-w-0'><b>${esc(f.name)}</b> <span class='text-xs muted'>(${f.step}-min increments)</span>
+<div class='min-w-0'><b>${esc(f.name)}</b>
+<div class='text-xs muted'>${VTYPE[f.type]} · ${f.capacity} team${f.capacity > 1 ? 's' : ''} at once · ${f.step}-min increments</div>
 <div class='text-xs muted'>${f.windows.map(w => w.day.slice(0, 3) + ' ' + w.start + '–' + w.end).join(', ')}</div></div>
 <div class='flex flex-wrap gap-1 shrink-0 justify-end'>
 <button type='button' class='pdfb' data-pf='${i}' aria-label='Export PDF calendar for ${esc(f.name)}'>PDF</button>
 <button type='button' class='edit' data-ef='${i}' aria-label='Edit ${esc(f.name)}'>Edit</button>
 <button type='button' class='danger' data-rf='${i}' aria-label='Remove ${esc(f.name)}'>×</button></div></div>`).join('')
-    : `<p class='text-sm muted'>No fields entered.</p>`;
+    : `<p class='text-sm muted'>No venues entered.</p>`;
 }
 function renderSchedule() {
-  if (!schedule.length) { $('schedule').innerHTML = ''; $('summary').textContent = 'Add teams and fields, then generate a schedule.'; return; }
+  if (!schedule.length) { $('schedule').innerHTML = ''; $('summary').textContent = 'Add teams and venues, then generate a schedule.'; return; }
   const g = {};
   schedule.forEach(a => (g[a.day] = g[a.day] || []).push(a));
   $('schedule').innerHTML = days.filter(d => g[d]).map(d => `<div class='rounded-xl overflow-hidden' style='border:1px solid #cbd5e1'>
-<div class='dayhead font-bold px-3 py-2'>${d}</div><div class='p-2 space-y-2'>${g[d].sort((a, b) => a.start - b.start).map(a => `<div class='item'>
-<div class='font-bold'>${esc(a.team)}</div><div class='text-sm'>${clock(a.start)} – ${clock(a.end)}</div>
+<div class='dayhead font-bold px-3 py-2'>${d} <span class='text-xs'>(${g[d].length})</span></div><div class='p-2 space-y-2 scroll'>${g[d].sort((a, b) => a.start - b.start || String(a.field).localeCompare(b.field)).map(a => `<div class='item'>
+<div class='font-bold'>${esc(a.team)}</div><div class='text-sm'><span class='tag k-${a.kind}'>${kLabel(a.kind)}</span>${clock(a.start)} – ${clock(a.end)}</div>
 <div class='text-xs muted'>${esc(a.field)} · Birth year ${esc(a.year)}</div></div>`).join('')}</div></div>`).join('');
   const n = new Set(schedule.map(a => a.team + '|' + a.year)).size;
-  $('summary').textContent = `${schedule.length} practice${schedule.length === 1 ? '' : 's'} scheduled for ${n} team${n === 1 ? '' : 's'}.`;
+  const c = {}; schedule.forEach(a => { c[a.kind] = (c[a.kind] || 0) + 1; });
+  $('summary').textContent = `${schedule.length} session${schedule.length === 1 ? '' : 's'} scheduled for ${n} team${n === 1 ? '' : 's'}: ` +
+    Object.keys(KINDS).filter(k => c[k]).map(k => c[k] + ' ' + kLabel(k)).join(', ') + '.';
 }
 
 /* ---------- Minimal PDF writer (no libraries) ---------- */
@@ -393,23 +449,30 @@ function buildPdf(o, msgEl) {
     if (hr) c.text(36, y + 3, clock(m), 8, false, [0.3, 0.3, 0.3]);
   }
   for (let k = 0; k <= 7; k++) { const x = gx + k * cw; c.line(x, hy, x, bot, [0.6, 0.6, 0.6], 0.6); }
-  o.ent.forEach(e => {
-    const k = days.indexOf(e.day); if (k < 0) return;
-    const a = Math.max(e.start, lo), b = Math.min(e.end, hi); if (b <= a) return;
-    const x = gx + k * cw + 2, y = top + (a - lo) * ppm + 1, w = cw - 4, h = Math.max(10, (b - a) * ppm - 2);
-    c.rect(x, y, w, h, [0.09, 0.47, 0.23]);
-    let ty = y + 10;
-    [[e.l1, 8, true], [e.l2, 7, false], [e.l3, 7, false]].forEach(l => { if (ty + 2 <= y + h) { c.text(x + 3, ty, fit(l[0], l[1], w - 6), l[1], l[2], [1, 1, 1]); ty += 10; } });
+  // Overlapping entries in one day column are drawn side by side
+  days.forEach((d, k) => {
+    const list = o.ent.filter(e => e.day === d).sort((a, b) => a.start - b.start);
+    const lanes = []; list.forEach(e => { let l = lanes.findIndex(end => end <= e.start); if (l < 0) { l = lanes.length; lanes.push(0); } lanes[l] = e.end; e._lane = l; });
+    const nl = Math.max(1, lanes.length);
+    list.forEach(e => {
+      const a = Math.max(e.start, lo), b = Math.min(e.end, hi); if (b <= a) return;
+      const lw = (cw - 4) / nl, x = gx + k * cw + 2 + e._lane * lw, y = top + (a - lo) * ppm + 1, w = lw - 1, h = Math.max(10, (b - a) * ppm - 2);
+      c.rect(x, y, w, h, (KINDS[e.kind] || KINDS.practice).pdf);
+      let ty = y + 10;
+      [[e.l1, 8, true], [e.l2, 7, false], [e.l3, 7, false]].forEach(l => { if (ty + 2 <= y + h) { c.text(x + 3, ty, fit(l[0], l[1], w - 6), l[1], l[2], [1, 1, 1]); ty += 10; } });
+    });
   });
-  if (!o.ent.length) c.text(gx + 10, top + 22, 'No practices scheduled. Generate the schedule, then export again.', 10, true, [0.7, 0.1, 0.1]);
-  c.text(36, 590, 'Generated ' + new Date().toLocaleDateString() + ' \u00B7 Soccer Practice Scheduler \u00B7 ' + o.ent.length + ' practice(s) per week', 8, false, [0.45, 0.45, 0.45]);
+  if (!o.ent.length) c.text(gx + 10, top + 22, 'Nothing scheduled. Generate the schedule, then export again.', 10, true, [0.7, 0.1, 0.1]);
+  let lx = 36;
+  Object.keys(KINDS).forEach(k => { c.rect(lx, 582, 10, 10, KINDS[k].pdf); c.text(lx + 14, 590, KINDS[k].label, 8, false, [0.2, 0.2, 0.2]); lx += 80; });
+  c.text(lx + 10, 590, 'Generated ' + new Date().toLocaleDateString() + ' \u00B7 ' + o.ent.length + ' session(s) per week', 8, false, [0.45, 0.45, 0.45]);
   pages.push(c.out());
 
-  let p = Cv(), y = 48; const cx = [36, 186, 376, 606];
+  let p = Cv(), y = 48; const cx = [36, 156, 306, 466];
   const newPage = () => { pages.push(p.out()); p = Cv(); y = 48; };
   const hdr = () => { p.rect(36, y - 13, 720, 18, [0.08, 0.5, 0.24]); o.head.forEach((h, j) => p.text(cx[j] + 4, y, h, 9, true, [1, 1, 1])); y += 20; };
   p.text(36, y, fit(o.listTitle, 16, 720), 16, true, G); y += 26; hdr();
-  if (!o.rows.length) { p.text(40, y, 'No practices scheduled.', 9, false, [0.3, 0.3, 0.3]); y += 18; }
+  if (!o.rows.length) { p.text(40, y, 'Nothing scheduled.', 9, false, [0.3, 0.3, 0.3]); y += 18; }
   o.rows.forEach((r, ri) => {
     if (y > 570) { newPage(); hdr(); }
     if (ri % 2) p.rect(36, y - 13, 720, 18, [0.93, 0.97, 0.93]);
@@ -420,38 +483,37 @@ function buildPdf(o, msgEl) {
   p.text(36, y, o.noteTitle, 11, true, G); y += 16;
   o.notes.forEach(n => { if (y > 584) newPage(); p.text(44, y, fit('- ' + n, 9, 700), 9, false, [0.2, 0.2, 0.2]); y += 14; });
   pages.push(p.out());
-  try { dl(mkPdf(pages), o.file); say(msgEl, 'PDF exported: ' + o.file + (o.ent.length ? '' : ' (no practices scheduled for this one yet)'), !o.ent.length); }
+  try { dl(mkPdf(pages), o.file); say(msgEl, 'PDF exported: ' + o.file + (o.ent.length ? '' : ' (nothing scheduled for this one yet)'), !o.ent.length); }
   catch (err) { say(msgEl, 'The PDF download was blocked in this environment.', true); }
 }
 const tmr = (a, b) => clock(a) + ' - ' + clock(b);
+const bySched = (a, b) => days.indexOf(a.day) - days.indexOf(b.day) || a.start - b.start;
 function teamPdf(i) {
   const t = teams[i]; if (!t) return;
   if (!schedule.length) { say('teamMsg', 'Generate the schedule first, then export the PDF.', true); return; }
-  const ent = schedule.filter(a => a.team === t.name && String(a.year) === String(t.year))
-    .sort((a, b) => days.indexOf(a.day) - days.indexOf(b.day) || a.start - b.start)
-    .map(a => ({ day: a.day, start: a.start, end: a.end, l1: a.field, l2: tmr(a.start, a.end), l3: (a.end - a.start) + ' min' }));
-  const h = [];
-  fields.forEach(f => f.windows.forEach(w => h.push([mins(w.start), mins(w.end)])));
-  ent.forEach(e => h.push([e.start, e.end]));
+  const ent = schedule.filter(a => a.team === t.name && String(a.year) === String(t.year)).sort(bySched)
+    .map(a => ({ day: a.day, start: a.start, end: a.end, kind: a.kind, l1: kLabel(a.kind), l2: tmr(a.start, a.end), l3: a.field, venue: a.field }));
+  const h = ent.map(e => [e.start, e.end]);
+  if (!h.length) fields.forEach(f => f.windows.forEach(w => h.push([mins(w.start), mins(w.end)])));
+  t.restrictions.filter(r => !r.allDay).forEach(r => h.push([mins(r.from), mins(r.to)]));
   const sh = t.restrictions.map(r => ({ day: r.day, start: r.allDay ? 0 : mins(r.from), end: r.allDay ? 1440 : mins(r.to), label: 'Unavailable' }));
+  const plan = 'Practice ' + t.count + 'x' + t.duration + 'm' + EXTRA.filter(k => t[k].count).map(k => ' \u00B7 ' + kLabel(k) + ' ' + t[k].count + 'x' + t[k].duration + 'm').join('');
   buildPdf({
-    title: t.name + ' - Weekly Practice Calendar',
-    sub: 'Birth year ' + t.year + ' \u00B7 ' + t.count + ' practice(s)/week \u00B7 ' + t.duration + ' min each',
+    title: t.name + ' - Weekly Calendar', sub: 'Birth year ' + t.year + ' \u00B7 ' + plan,
     ent, sh, rg: rangeOf(h),
-    listTitle: t.name + ' (' + t.year + ') - Practice List',
-    head: ['Day', 'Time', 'Field', 'Length'],
-    rows: ent.map(e => [e.day, e.l2, e.l1, e.l3]),
+    listTitle: t.name + ' (' + t.year + ') - Session List',
+    head: ['Day', 'Time', 'Session', 'Venue'],
+    rows: ent.map(e => [e.day, e.l2, e.l1, e.venue]),
     noteTitle: 'Unavailable times',
     notes: t.restrictions.length ? t.restrictions.map(r => r.day + (r.allDay ? ' (all day)' : ' ' + tmr(mins(r.from), mins(r.to)))) : ['None'],
-    file: slug(t.name + '-' + t.year) + '-practice-calendar.pdf'
+    file: slug(t.name + '-' + t.year) + '-calendar.pdf'
   }, 'teamMsg');
 }
 function fieldPdf(i) {
   const f = fields[i]; if (!f) return;
   if (!schedule.length) { say('fieldMsg', 'Generate the schedule first, then export the PDF.', true); return; }
-  const ent = schedule.filter(a => String(a.field).toLowerCase() === f.name.toLowerCase())
-    .sort((a, b) => days.indexOf(a.day) - days.indexOf(b.day) || a.start - b.start)
-    .map(a => ({ day: a.day, start: a.start, end: a.end, l1: a.team, l2: tmr(a.start, a.end), l3: 'Birth year ' + a.year, year: a.year }));
+  const ent = schedule.filter(a => String(a.field).toLowerCase() === f.name.toLowerCase()).sort(bySched)
+    .map(a => ({ day: a.day, start: a.start, end: a.end, kind: a.kind, l1: a.team, l2: tmr(a.start, a.end), l3: kLabel(a.kind), year: a.year }));
   const h = f.windows.map(w => [mins(w.start), mins(w.end)]);
   ent.forEach(e => h.push([e.start, e.end]));
   const rg = rangeOf(h);
@@ -463,15 +525,15 @@ function fieldPdf(i) {
     if (cur < rg[1]) sh.push({ day: d, start: cur, end: rg[1], label: 'Not available' });
   });
   buildPdf({
-    title: f.name + ' - Weekly Field Calendar',
-    sub: ent.length + ' practice(s) booked \u00B7 ' + f.windows.length + ' availability window(s)',
+    title: f.name + ' - Weekly Venue Calendar',
+    sub: VTYPE[f.type] + ' \u00B7 ' + f.capacity + ' team(s) at once \u00B7 ' + ent.length + ' booking(s) \u00B7 ' + f.windows.length + ' availability window(s)',
     ent, sh, rg,
     listTitle: f.name + ' - Booking List',
-    head: ['Day', 'Time', 'Team', 'Birth year'],
-    rows: ent.map(e => [e.day, e.l2, e.l1, String(e.year)]),
+    head: ['Day', 'Time', 'Team', 'Session'],
+    rows: ent.map(e => [e.day, e.l2, e.l1 + ' (' + e.year + ')', e.l3]),
     noteTitle: 'Available windows',
     notes: f.windows.map(w => w.day + ' ' + tmr(mins(w.start), mins(w.end))),
-    file: slug(f.name) + '-field-calendar.pdf'
+    file: slug(f.name) + '-venue-calendar.pdf'
   }, 'fieldMsg');
 }
 
@@ -484,7 +546,7 @@ root.addEventListener('click', e => {
   else if (d.et !== undefined) editTeam(+d.et);
   else if (d.rt !== undefined) { const i = +d.rt; teams.splice(i, 1); if (editT === i) resetTeam(); else { if (editT > i) editT--; render(); } say('teamMsg', 'Team removed.'); }
   else if (d.ef !== undefined) editField(+d.ef);
-  else if (d.rf !== undefined) { const i = +d.rf; fields.splice(i, 1); if (editF === i) resetField(); else { if (editF > i) editF--; render(); } say('fieldMsg', 'Field removed.'); }
+  else if (d.rf !== undefined) { const i = +d.rf; fields.splice(i, 1); if (editF === i) resetField(); else { if (editF > i) editF--; render(); } say('fieldMsg', 'Venue removed.'); }
 });
 $('addRestr').addEventListener('click', () => restrRow());
 $('addWin').addEventListener('click', () => {
@@ -503,6 +565,7 @@ $('teamForm').addEventListener('submit', e => {
   if (!(year >= 1990 && year <= 2035)) { say('teamMsg', 'Enter a birth year between 1990 and 2035.', true); return; }
   const rr = readRestr(); if (rr.err) { say('teamMsg', rr.err, true); return; }
   const t = { id: editT >= 0 ? teams[editT].id : nid(), name, year, count: +$('practiceCount').value, duration: +$('duration').value, restrictions: rr.list };
+  EXTRA.forEach(k => { t[k] = { count: +$(EXTRA_IDS[k][0]).value, duration: +$(EXTRA_IDS[k][1]).value }; });
   if (teams.some((x, j) => j !== editT && tKey(x) === tKey(t))) { say('teamMsg', 'A team with that name and birth year already exists.', true); return; }
   const was = editT >= 0;
   if (was) teams[editT] = t; else teams.push(t);
@@ -512,60 +575,90 @@ $('teamForm').addEventListener('submit', e => {
 $('fieldForm').addEventListener('submit', e => {
   e.preventDefault();
   const name = $('fieldName').value.trim();
-  if (!name) { say('fieldMsg', 'Enter a field name.', true); return; }
+  if (!name) { say('fieldMsg', 'Enter a venue name.', true); return; }
   const rw = readWins(); if (rw.err) { say('fieldMsg', rw.err, true); return; }
-  if (fields.some((x, j) => j !== editF && x.name.toLowerCase() === name.toLowerCase())) { say('fieldMsg', 'A field with that name already exists. Edit it to add more time windows.', true); return; }
-  const f = { id: editF >= 0 ? fields[editF].id : nid(), name, step: +$('slotLength').value, windows: rw.list };
+  if (fields.some((x, j) => j !== editF && x.name.toLowerCase() === name.toLowerCase())) { say('fieldMsg', 'A venue with that name already exists. Edit it to add more time windows.', true); return; }
+  const f = { id: editF >= 0 ? fields[editF].id : nid(), name, type: $('fieldType').value, capacity: +$('capacity').value, step: +$('slotLength').value, windows: rw.list };
   const was = editF >= 0;
   if (was) fields[editF] = f; else fields.push(f);
   resetField();
-  say('fieldMsg', was ? 'Field updated. Regenerate the schedule to apply changes.' : 'Field added.');
+  say('fieldMsg', was ? 'Venue updated. Regenerate the schedule to apply changes.' : 'Venue added.');
 });
 $('clearTeams').addEventListener('click', () => { if (!teams.length) return; if (!confirm('Remove all teams?')) return; teams = []; resetTeam(); say('teamMsg', 'All teams cleared.'); });
-$('clearFields').addEventListener('click', () => { if (!fields.length) return; if (!confirm('Remove all fields?')) return; fields = []; resetField(); say('fieldMsg', 'All fields cleared.'); });
+$('clearFields').addEventListener('click', () => { if (!fields.length) return; if (!confirm('Remove all venues?')) return; fields = []; resetField(); say('fieldMsg', 'All venues cleared.'); });
 $('clearSchedule').addEventListener('click', () => { schedule = []; renderSchedule(); $('summary').textContent = 'Schedule cleared.'; });
 
 /* ---------- Scheduler ---------- */
 const blocked = (t, day, s, en) => t.restrictions.some(r => r.day === day && (r.allDay || (s < mins(r.to) && en > mins(r.from))));
 $('generate').addEventListener('click', () => {
-  if (!teams.length || !fields.length) { say('message', 'Add at least one team and one field.', true); return; }
+  if (!teams.length || !fields.length) { say('message', 'Add at least one team and one venue.', true); return; }
   const ys = HH.test($('youthStart').value) ? mins($('youthStart').value) : 0, maxD = +$('maxDaily').value;
-  const slots = [];
+  const slots = { field: [], fitness: [], classroom: [] };
   fields.forEach(f => f.windows.forEach(w => {
     const st = mins(w.start), en = mins(w.end);
-    for (let m = st; m < en; m += f.step) slots.push({ fid: f.id, field: f.name, day: w.day, start: m, endLimit: en });
+    for (let m = st; m < en; m += f.step) slots[f.type].push({ f, field: f.name, day: w.day, start: m, endLimit: en });
   }));
-  const out = [], miss = {}, needs = [];
-  teams.forEach(t => { for (let k = 0; k < t.count; k++) needs.push(t); });
-  // Most constrained teams first
-  needs.sort((a, b) => b.restrictions.length - a.restrictions.length || b.duration - a.duration || b.year - a.year);
-  for (const t of needs) {
-    const c = slots.filter(s => {
-      const en = s.start + t.duration;
-      return s.start >= ys && en <= s.endLimit && !blocked(t, s.day, s.start, en)
-        && !out.some(a => a.day === s.day && s.start < a.end && en > a.start && (a.fid === s.fid || a.tid === t.id))
-        && out.filter(a => a.tid === t.id && a.day === s.day).length < maxD;
-    }).map(s => {
-      const same = out.filter(a => a.tid === t.id && a.day === s.day).length;
-      const load = out.filter(a => a.day === s.day).length;
+  const byDay = {}; days.forEach(d => { byDay[d] = []; });
+  const out = [], miss = {};
+  const fieldLoad = t => t.count + t.blueplus.count;
+  // Field sessions first (most constrained teams first), then fitness, then classroom
+  const needs = [];
+  teams.forEach(t => { for (let k = 0; k < t.count; k++) needs.push({ t, kind: 'practice', dur: t.duration }); });
+  teams.forEach(t => { for (let k = 0; k < t.blueplus.count; k++) needs.push({ t, kind: 'blueplus', dur: t.blueplus.duration }); });
+  const order = { practice: 0, blueplus: 1, fitness: 2, classroom: 3 };
+  needs.sort((a, b) => order[a.kind] - order[b.kind] || b.t.restrictions.length - a.t.restrictions.length || fieldLoad(b.t) - fieldLoad(a.t) || b.dur - a.dur || b.t.year - a.t.year);
+  ['fitness', 'classroom'].forEach(k => teams.forEach(t => { for (let i = 0; i < t[k].count; i++) needs.push({ t, kind: k, dur: t[k].duration }); }));
+  const isField = k => KINDS[k].venue === 'field';
+  for (const nd of needs) {
+    const t = nd.t, kind = nd.kind, dur = nd.dur;
+    let best = null, bestScore = Infinity;
+    for (const s of slots[KINDS[kind].venue]) {
+      const en = s.start + dur, list = byDay[s.day];
+      if (s.start < ys || en > s.endLimit || blocked(t, s.day, s.start, en)) continue;
+      let clash = false, used = 0, teamField = 0, sameKind = 0, adjacent = false, teamDay = 0;
+      for (const a of list) {
+        const ov = s.start < a.end && en > a.start;
+        if (a.tid === t.id) {
+          if (ov) { clash = true; break; }
+          teamDay++;
+          if (isField(a.kind)) teamField++;
+          if (a.kind === kind) sameKind++;
+          if (a.end === s.start || a.start === en) adjacent = true;
+        }
+        if (ov && a.fid === s.f.id) used++;
+      }
+      if (clash || used >= s.f.capacity) continue;
+      if (isField(kind) ? teamField >= maxD : sameKind >= 1) continue;
       const late = Math.max(0, s.start - 19 * 60) / 30;
-      const adj = out.some(a => a.tid === t.id && Math.abs(days.indexOf(a.day) - days.indexOf(s.day)) === 1) ? 3 : 0;
-      return { s, score: same * 100 + load * 2 + late + adj };
-    }).sort((a, b) => a.score - b.score);
-    if (c.length) { const s = c[0].s; out.push({ tid: t.id, fid: s.fid, team: t.name, year: t.year, day: s.day, field: s.field, start: s.start, end: s.start + t.duration }); }
-    else miss[t.name] = (miss[t.name] || 0) + 1;
+      let score;
+      if (isField(kind)) {
+        const adjDay = out.some(a => a.tid === t.id && isField(a.kind) && Math.abs(days.indexOf(a.day) - days.indexOf(s.day)) === 1) ? 3 : 0;
+        score = teamDay * 50 + list.length * 0.5 + late + adjDay;
+      } else {
+        // Prefer back-to-back with the team's own session to save a trip
+        score = adjacent ? 0 : (teamDay ? 8 : 25);
+        score += list.filter(a => a.fid === s.f.id).length * 0.3 + late * 0.5;
+      }
+      if (score < bestScore) { bestScore = score; best = s; }
+    }
+    if (best) {
+      const e = { tid: t.id, fid: best.f.id, team: t.name, year: t.year, kind, day: best.day, field: best.field, start: best.start, end: best.start + dur };
+      out.push(e); byDay[best.day].push(e);
+    } else {
+      const key = t.name + ' – ' + kLabel(kind); miss[key] = (miss[key] || 0) + 1;
+    }
   }
-  out.sort((a, b) => days.indexOf(a.day) - days.indexOf(b.day) || a.start - b.start);
+  out.sort((a, b) => bySched(a, b) || a.field.localeCompare(b.field));
   schedule = out.map(({ tid, fid, ...r }) => r);
   renderSchedule();
   const mk = Object.keys(miss);
-  if (mk.length) say('message', 'Could not place: ' + mk.map(k => k + ' (' + miss[k] + ')').join(', ') + '. Add field time or relax restrictions.', true);
-  else say('message', 'All requested practices were successfully scheduled. Use the PDF buttons to export calendars.');
+  if (mk.length) say('message', 'Could not place ' + mk.reduce((n, k) => n + miss[k], 0) + ' session(s): ' + mk.map(k => k + ' (' + miss[k] + ')').join(', ') + '. Add venue time, raise venue capacity or relax restrictions.', true);
+  else say('message', 'All requested sessions were successfully scheduled. Use the PDF buttons to export calendars.');
 });
 
 /* ---------- Database export / import ---------- */
 function buildDb() {
-  return { app: 'SoccerPracticeScheduler', version: 2, exportedAt: new Date().toISOString(),
+  return { app: 'SoccerPracticeScheduler', version: 3, exportedAt: new Date().toISOString(),
     settings: { youthStart: $('youthStart').value, maxDaily: +$('maxDaily').value },
     teams: teams.map(({ id, ...t }) => t), fields: fields.map(({ id, ...f }) => f), schedule };
 }
@@ -575,11 +668,12 @@ $('exportBtn').addEventListener('click', () => {
     const url = URL.createObjectURL(new Blob([txt], { type: 'application/json' }));
     const a = document.createElement('a'); a.href = url; a.download = 'soccer-scheduler-' + new Date().toISOString().slice(0, 10) + '.json';
     root.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1500);
-    say('dbMsg', `Exported ${teams.length} team(s), ${fields.length} field(s), ${schedule.length} practice(s). If no download started, copy the JSON below into a .json file.`);
+    say('dbMsg', `Exported ${teams.length} team(s), ${fields.length} venue(s), ${schedule.length} session(s). If no download started, copy the JSON below into a .json file.`);
   } catch (err) { say('dbMsg', 'Download blocked here. Copy the JSON below and save it as a .json file.', true); }
 });
 $('showJson').addEventListener('click', () => { $('jsonBox').value = JSON.stringify(buildDb(), null, 2); $('jsonBox').select(); say('dbMsg', 'Current database shown below (selected for copying).'); });
 
+const okDur = d => DURS.includes(d);
 function normRestr(r) {
   if (!r || typeof r !== 'object' || !days.includes(r.day)) return null;
   const allDay = !!r.allDay; let from = String(r.from || ''), to = String(r.to || '');
@@ -595,8 +689,14 @@ function normWin(w) {
 function normTeam(t, bad) {
   if (!t || typeof t !== 'object') return null;
   const n = { name: String(t.name == null ? '' : t.name).trim().slice(0, 60), year: parseInt(t.year, 10), count: +t.count, duration: +t.duration };
-  if (!n.name || !(n.year >= 1990 && n.year <= 2035) || ![1, 2, 3, 4].includes(n.count) || ![60, 75, 90, 120].includes(n.duration)) return null;
-  // Supports v1 files (single blockDay/blockAfter)
+  if (!n.name || !(n.year >= 1990 && n.year <= 2035) || ![1, 2, 3, 4].includes(n.count) || !okDur(n.duration)) return null;
+  // Extras (older files have none, so they default to 0)
+  EXTRA.forEach(k => {
+    const x = t[k] && typeof t[k] === 'object' ? t[k] : {};
+    const c = [0, 1, 2, 3, 4].includes(+x.count) ? +x.count : 0, d = okDur(+x.duration) ? +x.duration : 60;
+    n[k] = { count: c, duration: d };
+  });
+  // v1 files used a single blockDay / blockAfter
   const src = Array.isArray(t.restrictions) ? t.restrictions : (t.blockDay ? [{ day: t.blockDay, allDay: !t.blockAfter, from: t.blockAfter || '00:00', to: '23:59' }] : []);
   const rs = src.map(normRestr); bad.n += rs.filter(x => !x).length;
   n.restrictions = rs.filter(Boolean).sort(dsort);
@@ -604,9 +704,12 @@ function normTeam(t, bad) {
 }
 function normField(f, bad) {
   if (!f || typeof f !== 'object') return null;
-  const n = { name: String(f.name == null ? '' : f.name).trim().slice(0, 60), step: [30, 60].includes(+f.step) ? +f.step : 60 };
+  const n = { name: String(f.name == null ? '' : f.name).trim().slice(0, 60),
+    type: VTYPE[f.type] ? f.type : 'field',
+    capacity: [1, 2, 3, 4].includes(+f.capacity) ? +f.capacity : 1,
+    step: [15, 30, 60].includes(+f.step) ? +f.step : 60 };
   if (!n.name) return null;
-  // Supports v1 files (one record per day/time)
+  // v1 files had one record per day/time
   const src = Array.isArray(f.windows) ? f.windows : [{ day: f.day, start: f.start, end: f.end }];
   const ws = src.map(normWin); bad.n += ws.filter(x => !x).length;
   n.windows = ws.filter(Boolean).sort(dsort);
@@ -620,7 +723,8 @@ function addField(f) {
 }
 function normSched(a) {
   if (!a || typeof a !== 'object') return null;
-  const n = { team: String(a.team == null ? '' : a.team).slice(0, 60), year: parseInt(a.year, 10) || '', day: String(a.day || ''), field: String(a.field == null ? '' : a.field).slice(0, 60), start: +a.start, end: +a.end };
+  const n = { team: String(a.team == null ? '' : a.team).slice(0, 60), year: parseInt(a.year, 10) || '', kind: KINDS[a.kind] ? a.kind : 'practice',
+    day: String(a.day || ''), field: String(a.field == null ? '' : a.field).slice(0, 60), start: +a.start, end: +a.end };
   if (!n.team || !days.includes(n.day) || !Number.isFinite(n.start) || !Number.isFinite(n.end) || n.start < 0 || n.end > 1440 || n.end <= n.start) return null;
   return n;
 }
@@ -640,11 +744,11 @@ function doImport(text) {
     if ([1, 2].includes(+s.maxDaily)) $('maxDaily').value = String(+s.maxDaily);
   } else schedule = [];
   resetTeam(); resetField(); renderSchedule();
-  say('dbMsg', `${mode === 'replace' ? 'Replaced' : 'Merged'}: ${at} team(s) and ${af} field record(s) loaded${dup ? ', ' + dup + ' duplicate team(s) skipped' : ''}${bad.n ? ', ' + bad.n + ' invalid record(s) skipped' : ''}.${mode === 'merge' ? ' Regenerate the schedule to include merged data.' : ''}`, bad.n > 0);
+  say('dbMsg', `${mode === 'replace' ? 'Replaced' : 'Merged'}: ${at} team(s) and ${af} venue record(s) loaded${dup ? ', ' + dup + ' duplicate team(s) skipped' : ''}${bad.n ? ', ' + bad.n + ' invalid record(s) skipped' : ''}.${mode === 'merge' ? ' Regenerate the schedule to include merged data.' : ''}`, bad.n > 0);
 }
 $('importFile').addEventListener('change', e => {
   const file = e.target.files && e.target.files[0]; if (!file) return;
-  if (file.size > 2000000) { say('dbMsg', 'Import failed: file is larger than 2 MB.', true); e.target.value = ''; return; }
+  if (file.size > 5000000) { say('dbMsg', 'Import failed: file is larger than 5 MB.', true); e.target.value = ''; return; }
   const r = new FileReader();
   r.onload = () => { doImport(String(r.result)); e.target.value = ''; };
   r.onerror = () => say('dbMsg', 'Import failed: the file could not be read.', true);
@@ -652,7 +756,6 @@ $('importFile').addEventListener('change', e => {
 });
 $('importText').addEventListener('click', () => { const t = $('jsonBox').value.trim(); if (!t) { say('dbMsg', 'Paste exported JSON into the box first.', true); return; } doImport(t); });
 
-// Warn before closing if there is unsaved data
 window.addEventListener('beforeunload', e => { if (teams.length || fields.length) { e.preventDefault(); e.returnValue = ''; } });
 
 resetTeam(); resetField(); renderSchedule();
